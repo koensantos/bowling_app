@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Individual Scores</title>
+    <style>
+        table, th, td {
+            border: 1px solid black; border-collapse: collapse;
+            padding: 5px;
+        }
+        #aggregateStatsContainer {
+            margin-top: 20px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Bowling Tracker</h1>
+    
+    <label for="bowlerSearch">Enter Bowler Name:</label>
+    <input type="text" id="bowlerSearch" />
+    <button onclick="filterByName()">Search</button>
+    
+    <div id="scoreTableContainer"></div>
+    <div id="aggregateStatsContainer"></div>
+
+    <a href="index.html"><button>Return to Home Screen</button></a>
+
+    <script src="script.js"></script>
+</body>
+</html>

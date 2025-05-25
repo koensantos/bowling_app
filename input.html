@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Input Score</title>
+    </head>
+    <body>
+        <h1>Input your scores here.</h1>
+        <label for="frame1">Frame 1:</label>
+        <input type="text" id="frame1" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <label for="frame2">Frame 2:</label>
+        <input type="text" id="frame2" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <label for="frame3">Frame 3:</label>
+        <input type="text" id="frame3" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <label for="frame4">Frame 4:</label>
+        <input type="text" id="frame4" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <label for="frame5">Frame 5:</label>
+        <input type="text" id="frame5" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <label for="frame6">Frame 6:</label>
+        <input type="text" id="frame6" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <label for="frame7">Frame 7:</label>
+        <input type="text" id="frame7" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <label for="frame8">Frame 8:</label>
+        <input type="text" id="frame8" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <label for="frame9">Frame 9:</label>
+        <input type="text" id="frame9" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <label for="frame10">Frame 10:</label>
+        <input type="text" id="frame10" placeholder="e.g. X or 9 / or 8 1">
+        <br></br>
+        <input type="text" id = "bowler_name" placeholder="Type in your full name." required>
+        <br></br>
+       
+
+        <button onclick="saveScores()">Submit Scores</button>
+
+        <button onclick="localStorage.removeItem('bowlingStats')">Clear All Stats</button>
+
+        <a href="index.html"><button>Return to Home Screen</button></a>
+
+
+        <script src="script.js"></script>
+    </body>
+</html>
