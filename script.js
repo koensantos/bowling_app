@@ -17,6 +17,8 @@ function saveScores(){
     const score = calculateScore(frames);
 
     saveBowlerStats(bowler, score, stats);
+
+
 }
 
 function rollValue(roll) {
@@ -296,3 +298,50 @@ function displayTeamScores() {
     container.innerHTML = html;
 }
 
+function downloadTeamCSV() {
+    const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
+    const teamStats = {};
+
+    for (let entry of data) {
+        const name = entry.name;
+
+        if (!teamStats[name]) {
+            teamStats[name] = {
+                games: 0,
+                totalScore: 0,
+                totalStrikes: 0,
+                totalSpares: 0,
+                totalOpens: 0
+            };
+        }
+
+        teamStats[name].games += 1;
+        teamStats[name].totalScore += entry.score;
+
+        teamStats[name].totalStrikes += entry.strikePercent * 12;
+        teamStats[name].totalSpares += entry.sparePercent * 11;
+        teamStats[name].totalOpens += entry.openPercent * 10;
+    }
+
+    let csv = "Name,Games,Total Score,Avg Score,Total Strikes,Total Spares,Total Opens,Strike %,Spare %,Open %\n";
+
+    for (let name in teamStats) {
+        const stats = teamStats[name];
+        const avgScore = stats.totalScore / stats.games;
+        const strikePercent = (stats.totalStrikes / (stats.games * 12)) * 100;
+        const sparePercent = (stats.totalSpares / (stats.games * 11)) * 100;
+        const openPercent = (stats.totalOpens / (stats.games * 10)) * 100;
+
+        csv += `${name},${stats.games},${stats.totalScore},${avgScore.toFixed(2)},` +
+               `${stats.totalStrikes.toFixed(1)},${stats.totalSpares.toFixed(1)},${stats.totalOpens.toFixed(1)},` +
+               `${strikePercent.toFixed(2)}%,${sparePercent.toFixed(2)}%,${openPercent.toFixed(2)}%\n`;
+    }
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "team_stats.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
