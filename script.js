@@ -176,17 +176,21 @@ function editGame(index) {
     const container = document.getElementById("frameEditContainer");
     container.innerHTML = `<h3>Editing Game from ${game.timestamp}</h3>`;
 
-    let html = "";
+    // Add frame fields
+    let html = "<div>";
     for (let i = 1; i <= 10; i++) {
-        const frameValue = game.frames && game.frames[i - 1] ? game.frames[i - 1] : "";
+        const frameValue = game.frames?.[i - 1] || "";
         html += `
-            <label>Frame ${i}: <input type="text" id="editFrame${i}" value="${frameValue}" placeholder="e.g. X or 9 / or 8 1"></label><br>
+            <label for="editFrame${i}">Frame ${i}:</label>
+            <input type="text" id="editFrame${i}" value="${frameValue}" placeholder="e.g. X or 7 / or 8 1"><br>
         `;
     }
+    html += "</div>";
 
     html += `<button onclick="saveEditedGame(${index}, '${game.name}')">Save Changes</button>`;
     container.innerHTML += html;
 }
+
 
 function saveEditedGame(index, bowlerName) {
     const frames = [];
