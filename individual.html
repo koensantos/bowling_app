@@ -20,11 +20,13 @@
     <h2>Edit a Past Game</h2>
 
     <label for="gameSelect">Select Game:</label>
-    <select id="gameSelect">
+    <select id="gameSelect" onchange="showGameFrames()">
         <option value="">-- Select a Game --</option>
     </select>
 
-    <label for="frameSelect">Select Frame (1-10):</label>
+    <div id="selectedGameFrames" style="margin-top: 10px;"></div>
+
+    <label for="frameSelect">Select Frame (1–10):</label>
     <select id="frameSelect">
         <option value="">-- Select Frame --</option>
         <script>
@@ -38,8 +40,8 @@
     <input type="text" id="newFrameValue" placeholder="e.g. X or 7 / or 8 1">
 
     <button onclick="updateGameFrame()">Update Game</button>
-
     <p id="editStatus"></p>
+
 
     <script src="script.js"></script>
 </body>

@@ -233,26 +233,35 @@ function filterByName() {
     const nameInput = document.getElementById("bowlerSearch").value.trim().toLowerCase();
     const tableContainer = document.getElementById("scoreTableContainer");
     const aggregateContainer = document.getElementById("aggregateStatsContainer");
+    const gameSelect = document.getElementById("gameSelect");
 
     tableContainer.innerHTML = "";
     aggregateContainer.innerHTML = "";
+    gameSelect.innerHTML = `<option value="">-- Select a Game --</option>`;
 
     const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
 
-    const filtered = data.filter(entry => entry.name.toLowerCase() === nameInput);
+    const filtered = data.map((entry, index) => ({ ...entry, index }))
+                         .filter(entry => entry.name.toLowerCase() === nameInput);
 
     if (filtered.length === 0) {
         tableContainer.innerHTML = `<p>No scores found for "${nameInput}".</p>`;
         return;
     }
 
-    // Build scores table
-    let html = "<table><tr>" +
-        "<th>Game #</th><th>Score</th><th>Strike %</th><th>Spare %</th><th>Open %</th><th>Timestamp</th></tr>";
+    // Populate gameSelect dropdown
+    filtered.forEach(entry => {
+        const option = document.createElement("option");
+        option.value = entry.index;
+        option.textContent = `Game on ${entry.timestamp} (Score: ${entry.score})`;
+        gameSelect.appendChild(option);
+    });
 
-    filtered.forEach((entry, index) => {
+    // Build scores table
+    let html = "<table><tr><th>Name</th><th>Score</th><th>Strike %</th><th>Spare %</th><th>Open %</th><th>Timestamp</th></tr>";
+    filtered.forEach(entry => {
         html += `<tr>
-            <td>${index + 1}</td>
+            <td>${entry.name}</td>
             <td>${entry.score}</td>
             <td>${(entry.strikePercent * 100).toFixed(2)}%</td>
             <td>${(entry.sparePercent * 100).toFixed(2)}%</td>
@@ -260,16 +269,12 @@ function filterByName() {
             <td>${entry.timestamp}</td>
         </tr>`;
     });
-
     html += "</table>";
     tableContainer.innerHTML = html;
 
-    // Aggregate calculations
-    let totalGames = filtered.length;
-    let totalScore = 0;
-    let totalStrikes = 0;
-    let totalSpares = 0;
-    let totalOpens = 0;
+    // Aggregate Stats
+    const totalGames = filtered.length;
+    let totalScore = 0, totalStrikes = 0, totalSpares = 0, totalOpens = 0;
 
     filtered.forEach(s => {
         totalScore += s.score;
@@ -295,6 +300,7 @@ function filterByName() {
         <p>Open Percentage: ${(openPercent * 100).toFixed(2)}%</p>
     `;
 }
+
 
 
 function updateGameFrame() {
@@ -341,4 +347,32 @@ function updateGameFrame() {
     status.style.color = "green";
 
     filterByName();
+}
+
+function showGameFrames() {
+    const gameIndex = parseInt(document.getElementById("gameSelect").value);
+    const container = document.getElementById("selectedGameFrames");
+    container.innerHTML = "";
+
+    if (isNaN(gameIndex)) return;
+
+    const allGames = JSON.parse(localStorage.getItem("bowlingStats")) || [];
+    const game = allGames[gameIndex];
+
+    if (!game || !Array.isArray(game.frames)) {
+        container.textContent = "No frame data available.";
+        return;
+    }
+
+    let html = "<h4>Current Frame Values:</h4><table><tr>";
+    for (let i = 0; i < 10; i++) {
+        html += `<th>F${i + 1}</th>`;
+    }
+    html += "</tr><tr>";
+    for (let i = 0; i < 10; i++) {
+        html += `<td>${game.frames[i] || "-"}</td>`;
+    }
+    html += "</tr></table>";
+
+    container.innerHTML = html;
 }
