@@ -304,75 +304,68 @@ function filterByName() {
 
 
 function updateGameFrame() {
-    const name = document.getElementById("bowlerSearch").value.trim();
-    const timestamp = document.getElementById("gameSelect").value;
-    const frame = parseInt(document.getElementById("frameSelect").value);
+    const gameIndex = document.getElementById("gameSelect").value;
+    const frameNumber = parseInt(document.getElementById("frameSelect").value);
     const newValue = document.getElementById("newFrameValue").value.trim();
     const status = document.getElementById("editStatus");
 
-    if (!name || !timestamp || !frame || !newValue) {
-        status.textContent = "Please fill out all fields.";
-        status.style.color = "red";
+    if (!gameIndex || isNaN(frameNumber) || !newValue) {
+        status.textContent = "Please select a game, frame, and enter a new value.";
         return;
     }
 
     const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
-    const entry = data.find(e => e.name.toLowerCase() === name.toLowerCase() && e.timestamp === timestamp);
+    const game = data[gameIndex];
 
-    if (!entry) {
-        status.textContent = "Game not found.";
-        status.style.color = "red";
+    if (!game || !Array.isArray(game.frames) || !game.frames[frameNumber - 1]) {
+        status.textContent = "Game not found or invalid frame.";
         return;
     }
 
-    if (!entry.frames || entry.frames.length !== 10) {
-        status.textContent = "Game data is corrupted or incomplete.";
-        status.style.color = "red";
-        return;
-    }
+    // Update the frame value
+    game.frames[frameNumber - 1] = newValue;
 
-    entry.frames[frame - 1] = newValue;
-    const updated = calculateStatsFromFrames(entry.frames);
+    // Recalculate score and stats
+    const newScore = calculateScore(game.frames);
+    const stats = strikeSpareOpenPercentage(game.frames);
+    game.score = newScore;
+    game.strikePercent = stats.strikePercent;
+    game.sparePercent = stats.sparePercent;
+    game.openPercent = stats.openPercent;
+    game.timestamp = new Date().toLocaleString();
 
-    entry.score = updated.score;
-    entry.strikePercent = updated.strikePercent;
-    entry.sparePercent = updated.sparePercent;
-    entry.openPercent = updated.openPercent;
-
-    const index = data.findIndex(e => e.name.toLowerCase() === name.toLowerCase() && e.timestamp === timestamp);
-    data[index] = entry;
+    // Save back to localStorage
+    data[gameIndex] = game;
     localStorage.setItem("bowlingStats", JSON.stringify(data));
 
     status.textContent = "Game updated successfully!";
-    status.style.color = "green";
-
-    filterByName();
+    filterByName();  // Refresh stats & dropdown
+    document.getElementById("currentFrames").innerHTML = "";  // Clear frame view
 }
 
+
 function showGameFrames() {
-    const gameIndex = parseInt(document.getElementById("gameSelect").value);
-    const container = document.getElementById("selectedGameFrames");
-    container.innerHTML = "";
+    const selectedIndex = document.getElementById("gameSelect").value;
+    const currentFrames = document.getElementById("currentFrames");
 
-    if (isNaN(gameIndex)) return;
-
-    const allGames = JSON.parse(localStorage.getItem("bowlingStats")) || [];
-    const game = allGames[gameIndex];
-
-    if (!game || !Array.isArray(game.frames)) {
-        container.textContent = "No frame data available.";
+    if (!selectedIndex) {
+        currentFrames.innerHTML = "";
         return;
     }
 
-    let html = "<h4>Current Frame Values:</h4><table><tr>";
-    for (let i = 0; i < 10; i++) {
-        html += `<th>F${i + 1}</th>`;
-    }
-    html += "</tr><tr>";
-    for (let i = 0; i < 10; i++) {
-        html += `<td>${game.frames[i] || "-"}</td>`;
-    }
-    html += "</tr></table>";
+    const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
+    const game = data[selectedIndex];
 
-    container.innerHTML = html;
+    if (!game || !Array.isArray(game.frames)) {
+        currentFrames.innerHTML = "<p>Game not found.</p>";
+        return;
+    }
+
+    let html = "<h4>Current Frames:</h4><ul>";
+    game.frames.forEach((frame, i) => {
+        html += `<li>Frame ${i + 1}: ${frame}</li>`;
+    });
+    html += "</ul>";
+
+    currentFrames.innerHTML = html;
 }
