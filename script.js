@@ -173,22 +173,26 @@ function editGame(index) {
     const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
     const game = data[index];
 
-    const container = document.getElementById("frameEditContainer");
-    container.innerHTML = `<h3>Editing Game from ${game.timestamp}</h3>`;
+    if (!game) {
+        document.getElementById("frameEditContainer").innerHTML = `<p>Game not found.</p>`;
+        return;
+    }
 
-    // Add frame fields
-    let html = "<div>";
+    const container = document.getElementById("frameEditContainer");
+    container.innerHTML = `<h3>Editing Game from ${game.timestamp}</h3><form id="editForm">`;
+
     for (let i = 1; i <= 10; i++) {
-        const frameValue = game.frames?.[i - 1] || "";
-        html += `
+        const frameVal = game.frames && game.frames[i - 1] ? game.frames[i - 1] : "";
+        container.innerHTML += `
             <label for="editFrame${i}">Frame ${i}:</label>
-            <input type="text" id="editFrame${i}" value="${frameValue}" placeholder="e.g. X or 7 / or 8 1"><br>
+            <input type="text" id="editFrame${i}" value="${frameVal}" placeholder="e.g. X or 9 / or 8 1"><br>
         `;
     }
-    html += "</div>";
 
-    html += `<button onclick="saveEditedGame(${index}, '${game.name}')">Save Changes</button>`;
-    container.innerHTML += html;
+    container.innerHTML += `
+        <button type="button" onclick="saveEditedGame(${index}, '${game.name}')">Save Changes</button>
+        </form>
+    `;
 }
 
 
