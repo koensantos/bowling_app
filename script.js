@@ -216,3 +216,61 @@ function saveEditedGame(index, bowlerName) {
     loadGamesForEdit();
     document.getElementById("frameEditContainer").innerHTML = "";
 }
+
+function calculateStatsFromFrames(frames) {
+    let score = calculateScore(frames);
+    let stats = strikeSpareOpenPercentage(frames);
+
+    return {
+        score: score,
+        strikePercent: stats.strikePercent,
+        sparePercent: stats.sparePercent,
+        openPercent: stats.openPercent
+    };
+}
+
+function updateGameFrame() {
+    const name = document.getElementById("bowlerSearch").value.trim();
+    const timestamp = document.getElementById("gameSelect").value;
+    const frame = parseInt(document.getElementById("frameSelect").value);
+    const newValue = document.getElementById("newFrameValue").value.trim();
+    const status = document.getElementById("editStatus");
+
+    if (!name || !timestamp || !frame || !newValue) {
+        status.textContent = "Please fill out all fields.";
+        status.style.color = "red";
+        return;
+    }
+
+    const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
+    const entry = data.find(e => e.name.toLowerCase() === name.toLowerCase() && e.timestamp === timestamp);
+
+    if (!entry) {
+        status.textContent = "Game not found.";
+        status.style.color = "red";
+        return;
+    }
+
+    if (!entry.frames || entry.frames.length !== 10) {
+        status.textContent = "Game data is corrupted or incomplete.";
+        status.style.color = "red";
+        return;
+    }
+
+    entry.frames[frame - 1] = newValue;
+    const updated = calculateStatsFromFrames(entry.frames);
+
+    entry.score = updated.score;
+    entry.strikePercent = updated.strikePercent;
+    entry.sparePercent = updated.sparePercent;
+    entry.openPercent = updated.openPercent;
+
+    const index = data.findIndex(e => e.name.toLowerCase() === name.toLowerCase() && e.timestamp === timestamp);
+    data[index] = entry;
+    localStorage.setItem("bowlingStats", JSON.stringify(data));
+
+    status.textContent = "Game updated successfully!";
+    status.style.color = "green";
+
+    filterByName();
+}
