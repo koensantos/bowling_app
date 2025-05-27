@@ -242,30 +242,23 @@ function filterByName() {
     const tableContainer = document.getElementById("scoreTableContainer");
     const aggregateContainer = document.getElementById("aggregateStatsContainer");
     const gameSelect = document.getElementById("gameSelect");
-
+    
     tableContainer.innerHTML = "";
     aggregateContainer.innerHTML = "";
-    gameSelect.innerHTML = `<option value="">-- Select a Game --</option>`;
+    gameSelect.innerHTML = '<option value="">-- Select a Game --</option>';
+    document.getElementById("selectedGameFrames").innerHTML = "";
 
     const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
-
-    const filtered = data.map((entry, index) => ({ ...entry, index }))
-                         .filter(entry => entry.name.toLowerCase() === nameInput);
+    const filtered = data
+        .map((entry, index) => ({ ...entry, index }))
+        .filter(entry => entry.name.toLowerCase() === nameInput);
 
     if (filtered.length === 0) {
         tableContainer.innerHTML = `<p>No scores found for "${nameInput}".</p>`;
         return;
     }
 
-    // Populate gameSelect dropdown
-    filtered.forEach(entry => {
-        const option = document.createElement("option");
-        option.value = entry.index;
-        option.textContent = `Game on ${entry.timestamp} (Score: ${entry.score})`;
-        gameSelect.appendChild(option);
-    });
-
-    // Build scores table
+    // Create score table
     let html = "<table><tr><th>Name</th><th>Score</th><th>Strike %</th><th>Spare %</th><th>Open %</th><th>Timestamp</th></tr>";
     filtered.forEach(entry => {
         html += `<tr>
@@ -280,16 +273,20 @@ function filterByName() {
     html += "</table>";
     tableContainer.innerHTML = html;
 
-    // Aggregate Stats
-    const totalGames = filtered.length;
-    let totalScore = 0, totalStrikes = 0, totalSpares = 0, totalOpens = 0;
-
-    filtered.forEach(s => {
-        totalScore += s.score;
-        totalStrikes += s.strikePercent * 12;
-        totalSpares += s.sparePercent * 11;
-        totalOpens += s.openPercent * 10;
+    // Populate gameSelect dropdown
+    filtered.forEach((entry, i) => {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = `Game on ${entry.timestamp} – Score: ${entry.score}`;
+        gameSelect.appendChild(option);
     });
+
+    // Aggregate stats
+    const totalGames = filtered.length;
+    const totalScore = filtered.reduce((sum, s) => sum + s.score, 0);
+    const totalStrikes = filtered.reduce((sum, s) => sum + s.strikePercent * 12, 0);
+    const totalSpares = filtered.reduce((sum, s) => sum + s.sparePercent * 11, 0);
+    const totalOpens = filtered.reduce((sum, s) => sum + s.openPercent * 10, 0);
 
     const avgScore = totalScore / totalGames;
     const strikePercent = totalStrikes / (totalGames * 12);
@@ -308,6 +305,7 @@ function filterByName() {
         <p>Open Percentage: ${(openPercent * 100).toFixed(2)}%</p>
     `;
 }
+
 
 
 
@@ -354,26 +352,24 @@ function updateGameFrame() {
 
 function showGameFrames() {
     const selectedIndex = document.getElementById("gameSelect").value;
-    const currentFrames = document.getElementById("currentFrames");
+    const allData = JSON.parse(localStorage.getItem("bowlingStats")) || [];
+    const bowlerName = document.getElementById("bowlerSearch").value.trim().toLowerCase();
 
-    if (!selectedIndex) {
-        currentFrames.innerHTML = "";
+    const games = allData
+        .map((entry, index) => ({ ...entry, index }))
+        .filter(entry => entry.name.toLowerCase() === bowlerName);
+
+    if (!games[selectedIndex]) {
+        document.getElementById("selectedGameFrames").innerHTML = "<p>Game not found.</p>";
         return;
     }
 
-    const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
-    const game = data[selectedIndex];
-
-    if (!game || !Array.isArray(game.frames)) {
-        currentFrames.innerHTML = "<p>Game not found.</p>";
-        return;
-    }
-
-    let html = "<h4>Current Frames:</h4><ul>";
-    game.frames.forEach((frame, i) => {
-        html += `<li>Frame ${i + 1}: ${frame}</li>`;
+    const game = games[selectedIndex];
+    let html = "<h3>Frames</h3><ul>";
+    game.frames.forEach((frame, idx) => {
+        html += `<li>Frame ${idx + 1}: ${frame}</li>`;
     });
     html += "</ul>";
 
-    currentFrames.innerHTML = html;
+    document.getElementById("selectedGameFrames").innerHTML = html;
 }
