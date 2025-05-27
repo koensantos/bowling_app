@@ -229,6 +229,74 @@ function calculateStatsFromFrames(frames) {
     };
 }
 
+function filterByName() {
+    const nameInput = document.getElementById("bowlerSearch").value.trim().toLowerCase();
+    const tableContainer = document.getElementById("scoreTableContainer");
+    const aggregateContainer = document.getElementById("aggregateStatsContainer");
+
+    tableContainer.innerHTML = "";
+    aggregateContainer.innerHTML = "";
+
+    const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
+
+    const filtered = data.filter(entry => entry.name.toLowerCase() === nameInput);
+
+    if (filtered.length === 0) {
+        tableContainer.innerHTML = `<p>No scores found for "${nameInput}".</p>`;
+        return;
+    }
+
+    // Build scores table
+    let html = "<table><tr>" +
+        "<th>Game #</th><th>Score</th><th>Strike %</th><th>Spare %</th><th>Open %</th><th>Timestamp</th></tr>";
+
+    filtered.forEach((entry, index) => {
+        html += `<tr>
+            <td>${index + 1}</td>
+            <td>${entry.score}</td>
+            <td>${(entry.strikePercent * 100).toFixed(2)}%</td>
+            <td>${(entry.sparePercent * 100).toFixed(2)}%</td>
+            <td>${(entry.openPercent * 100).toFixed(2)}%</td>
+            <td>${entry.timestamp}</td>
+        </tr>`;
+    });
+
+    html += "</table>";
+    tableContainer.innerHTML = html;
+
+    // Aggregate calculations
+    let totalGames = filtered.length;
+    let totalScore = 0;
+    let totalStrikes = 0;
+    let totalSpares = 0;
+    let totalOpens = 0;
+
+    filtered.forEach(s => {
+        totalScore += s.score;
+        totalStrikes += s.strikePercent * 12;
+        totalSpares += s.sparePercent * 11;
+        totalOpens += s.openPercent * 10;
+    });
+
+    const avgScore = totalScore / totalGames;
+    const strikePercent = totalStrikes / (totalGames * 12);
+    const sparePercent = totalSpares / (totalGames * 11);
+    const openPercent = totalOpens / (totalGames * 10);
+
+    aggregateContainer.innerHTML = `
+        <h3>Aggregate Stats for "${nameInput}"</h3>
+        <p>Games Played: ${totalGames}</p>
+        <p>Average Score: ${avgScore.toFixed(2)}</p>
+        <p>Total Strikes: ${totalStrikes.toFixed(0)}</p>
+        <p>Total Spares: ${totalSpares.toFixed(0)}</p>
+        <p>Total Opens: ${totalOpens.toFixed(0)}</p>
+        <p>Strike Percentage: ${(strikePercent * 100).toFixed(2)}%</p>
+        <p>Spare Percentage: ${(sparePercent * 100).toFixed(2)}%</p>
+        <p>Open Percentage: ${(openPercent * 100).toFixed(2)}%</p>
+    `;
+}
+
+
 function updateGameFrame() {
     const name = document.getElementById("bowlerSearch").value.trim();
     const timestamp = document.getElementById("gameSelect").value;
