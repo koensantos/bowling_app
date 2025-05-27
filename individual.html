@@ -1,29 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Individual Scores</title>
-    <style>
-        table, th, td {
-            border: 1px solid black; border-collapse: collapse;
-            padding: 5px;
-        }
-        #aggregateStatsContainer {
-            margin-top: 20px;
-            font-family: Arial, sans-serif;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <title>Individual Bowler Stats</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Welcome to Bowling Tracker</h1>
-    
+    <h1>Individual Bowler Statistics</h1>
+
     <label for="bowlerSearch">Enter Bowler Name:</label>
-    <input type="text" id="bowlerSearch" />
+    <input type="text" id="bowlerSearch">
     <button onclick="filterByName()">Search</button>
-    
+
     <div id="scoreTableContainer"></div>
     <div id="aggregateStatsContainer"></div>
 
-    <a href="index.html"><button>Return to Home Screen</button></a>
+    <hr>
+
+    <h2>Edit a Past Game</h2>
+
+    <label for="gameSelect">Select Game:</label>
+    <select id="gameSelect">
+        <option value="">-- Select a Game --</option>
+    </select>
+
+    <label for="frameSelect">Select Frame (1-10):</label>
+    <select id="frameSelect">
+        <option value="">-- Select Frame --</option>
+        <script>
+            for (let i = 1; i <= 10; i++) {
+                document.write(`<option value="${i}">${i}</option>`);
+            }
+        </script>
+    </select>
+
+    <label for="newFrameValue">New Frame Value (e.g. "X", "7 /", "8 1"):</label>
+    <input type="text" id="newFrameValue" placeholder="e.g. X or 7 / or 8 1">
+
+    <button onclick="updateGameFrame()">Update Game</button>
+
+    <p id="editStatus"></p>
 
     <script src="script.js"></script>
 </body>
