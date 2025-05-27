@@ -1,29 +1,19 @@
-function saveScores(){
-    const frame1 = document.getElementById("frame1").value;
-    const frame2 = document.getElementById("frame2").value;
-    const frame3 = document.getElementById("frame3").value;
-    const frame4 = document.getElementById("frame4").value;
-    const frame5 = document.getElementById("frame5").value;
-    const frame6 = document.getElementById("frame6").value;
-    const frame7 = document.getElementById("frame7").value;
-    const frame8 = document.getElementById("frame8").value;
-    const frame9 = document.getElementById("frame9").value;
-    const frame10 = document.getElementById("frame10").value;
-
-    const frames = [frame1, frame2, frame3, frame4, frame5, frame6, frame7, frame8, frame9, frame10]
+function saveScores() {
+    const frames = [];
+    for (let i = 1; i <= 10; i++) {
+        frames.push(document.getElementById(`frame${i}`).value.trim());
+    }
 
     const bowler = document.getElementById("bowler_name").value.trim();
     const stats = strikeSpareOpenPercentage(frames);
     const score = calculateScore(frames);
 
-    saveBowlerStats(bowler, score, stats);
-
-
+    saveBowlerStats(bowler, score, stats, frames);
 }
 
 function rollValue(roll) {
     if (roll === "X") return 10;
-    if (roll === "/") return 10; 
+    if (roll === "/") return 10;
     return parseInt(roll, 10) || 0;
 }
 
@@ -57,13 +47,13 @@ function calculateScore(frames) {
     for (let frame = 0; frame < 10; frame++) {
         const roll = rolls[rollIndex];
 
-        if (roll === "X") { // Strike
+        if (roll === "X") {
             score += 10 + rollValue(rolls[rollIndex + 1]) + rollValue(rolls[rollIndex + 2]);
             rollIndex += 1;
-        } else if (rolls[rollIndex + 1] === "/") { // Spare
+        } else if (rolls[rollIndex + 1] === "/") {
             score += 10 + rollValue(rolls[rollIndex + 2]);
             rollIndex += 2;
-        } else { // Open frame
+        } else {
             score += rollValue(roll) + rollValue(rolls[rollIndex + 1]);
             rollIndex += 2;
         }
@@ -93,16 +83,13 @@ function strikeSpareOpenPercentage(frames) {
         const isSpare = currFrame.includes("/");
         const isOpen = !isStrike && !isSpare;
 
-        // Strikes
         const strikeCount = countChar(currFrame, "X");
         numStrikes += strikeCount;
         possibleStrikes += (i < 9) ? (isStrike ? 1 : 1) : strikeCount;
 
-        // Spares
         if (isSpare) numSpares++;
         possibleSpares++;
 
-        // Opens
         if (isOpen) numOpens++;
     }
 
@@ -121,9 +108,9 @@ function strikeSpareOpenPercentage(frames) {
     };
 }
 
-function saveBowlerStats(name, score, stats) {
+function saveBowlerStats(name, score, stats, frames) {
     const now = new Date();
-    const timestamp = now.toLocaleString(); // readable date and time
+    const timestamp = now.toLocaleString();
 
     const data = {
         name: name,
@@ -131,10 +118,10 @@ function saveBowlerStats(name, score, stats) {
         strikePercent: stats.strikePercent,
         sparePercent: stats.sparePercent,
         openPercent: stats.openPercent,
-        timestamp: timestamp
+        timestamp: timestamp,
+        frames: frames
     };
 
-    // Try to load existing data and ensure it's an array
     let existing = [];
 
     try {
@@ -142,7 +129,6 @@ function saveBowlerStats(name, score, stats) {
         if (Array.isArray(parsed)) {
             existing = parsed;
         } else {
-            // If it's not an array (could be object or corrupted), reset it
             console.warn("Corrupted localStorage 'bowlingStats'. Resetting to []");
             localStorage.removeItem("bowlingStats");
         }
@@ -155,193 +141,78 @@ function saveBowlerStats(name, score, stats) {
     localStorage.setItem("bowlingStats", JSON.stringify(existing));
 }
 
-function filterByName() {
-    const nameInput = document.getElementById("bowlerSearch").value.trim().toLowerCase();
-    const tableContainer = document.getElementById("scoreTableContainer");
-    const aggregateContainer = document.getElementById("aggregateStatsContainer");
-    
-    tableContainer.innerHTML = "";
-    aggregateContainer.innerHTML = "";
-
+function loadGamesForEdit() {
+    const name = document.getElementById("editBowlerSearch").value.trim().toLowerCase();
     const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
 
-    const filtered = data.filter(entry => entry.name.toLowerCase() === nameInput);
+    const filtered = data
+        .map((entry, index) => ({ ...entry, index }))
+        .filter(entry => entry.name.toLowerCase() === name);
+
+    const container = document.getElementById("gameEditListContainer");
+    container.innerHTML = "";
 
     if (filtered.length === 0) {
-        tableContainer.innerHTML = `<p>No scores found for "${nameInput}".</p>`;
+        container.innerHTML = `<p>No games found for "${name}".</p>`;
         return;
     }
 
-    // Build scores table
-    let html = "<table><tr>" +
-        "<th>Name</th><th>Score</th>" +
-        "<th>Strike %</th><th>Spare %</th><th>Open %</th><th>Timestamp</th></tr>";
-
+    let html = "<h3>Select a Game to Edit</h3><ul>";
     filtered.forEach(entry => {
-        html += `<tr>
-            <td>${entry.name}</td>
-            <td>${entry.score}</td>
-            <td>${(entry.strikePercent * 100).toFixed(2)}%</td>
-            <td>${(entry.sparePercent * 100).toFixed(2)}%</td>
-            <td>${(entry.openPercent * 100).toFixed(2)}%</td>
-            <td>${entry.timestamp}</td>
-        </tr>`;
+        html += `<li>
+            Game on ${entry.timestamp} - Score: ${entry.score}
+            <button onclick="editGame(${entry.index})">Edit</button>
+        </li>`;
     });
+    html += "</ul>";
 
-    html += "</table>";
-
-    // Aggregate calculations
-    let totalGames = filtered.length;
-    let totalScore = 0;
-    let totalStrikes = 0;
-    let totalSpares = 0;
-    let totalOpens = 0;
-
-    filtered.forEach(s => {
-        totalScore += s.score;
-        totalStrikes += s.strikePercent * 12; 
-        totalSpares += s.sparePercent * 11;   
-        totalOpens += s.openPercent * 10;     
-    });
-
-    const avgScore = totalScore / totalGames;
-    const strikePercent = totalStrikes / (totalGames * 12);
-    const sparePercent = totalSpares / (totalGames * 11);
-    const openPercent = totalOpens / (totalGames * 10);
-
-    tableContainer.innerHTML = html;
-
-    aggregateContainer.innerHTML = `
-        <h3>Aggregate Stats for "${nameInput}"</h3>
-        <p>Games Played: ${totalGames}</p>
-        <p>Average Score: ${avgScore.toFixed(2)}</p>
-        <p>Total Strikes: ${totalStrikes.toFixed(0)}</p>
-        <p>Total Spares: ${totalSpares.toFixed(0)}</p>
-        <p>Total Opens: ${totalOpens.toFixed(0)}</p>
-        <p>Strike Percentage: ${(strikePercent * 100).toFixed(2)}%</p>
-        <p>Spare Percentage: ${(sparePercent * 100).toFixed(2)}%</p>
-        <p>Open Percentage: ${(openPercent * 100).toFixed(2)}%</p>
-    `;
-}
-
-function displayTeamScores() {
-    const container = document.getElementById("teamScoresContainer");
-    container.innerHTML = "";
-
-    const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
-
-    const teamStats = {};
-
-    // Group by bowler
-    for (let entry of data) {
-        const name = entry.name;
-
-        if (!teamStats[name]) {
-            teamStats[name] = {
-                games: 0,
-                totalScore: 0,
-                totalStrikes: 0,
-                totalSpares: 0,
-                totalOpens: 0
-            };
-        }
-
-        teamStats[name].games += 1;
-        teamStats[name].totalScore += entry.score;
-
-        teamStats[name].totalStrikes += entry.strikePercent * 12; // Max 12 per game
-        teamStats[name].totalSpares += entry.sparePercent * 11;   // Max 11 per game
-        teamStats[name].totalOpens += entry.openPercent * 10;     // Max 10 per game
-    }
-
-    // Build table
-    let html = `
-        <table>
-            <tr>
-                <th>Bowler</th>
-                <th>Games</th>
-                <th>Total Score</th>
-                <th>Avg Score</th>
-                <th>Total Strikes</th>
-                <th>Total Spares</th>
-                <th>Total Opens</th>
-                <th>Strike %</th>
-                <th>Spare %</th>
-                <th>Open %</th>
-            </tr>
-    `;
-
-    for (let name in teamStats) {
-        const stats = teamStats[name];
-        const avgScore = stats.totalScore / stats.games;
-        const strikePercent = stats.totalStrikes / (stats.games * 12);
-        const sparePercent = stats.totalSpares / (stats.games * 11);
-        const openPercent = stats.totalOpens / (stats.games * 10);
-
-        html += `
-            <tr>
-                <td>${name}</td>
-                <td>${stats.games}</td>
-                <td>${stats.totalScore}</td>
-                <td>${avgScore.toFixed(2)}</td>
-                <td>${stats.totalStrikes.toFixed(1)}</td>
-                <td>${stats.totalSpares.toFixed(1)}</td>
-                <td>${stats.totalOpens.toFixed(1)}</td>
-                <td>${(strikePercent * 100).toFixed(2)}%</td>
-                <td>${(sparePercent * 100).toFixed(2)}%</td>
-                <td>${(openPercent * 100).toFixed(2)}%</td>
-            </tr>
-        `;
-    }
-
-    html += "</table>";
     container.innerHTML = html;
 }
 
-function downloadTeamCSV() {
+function editGame(index) {
     const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
-    const teamStats = {};
+    const game = data[index];
 
-    for (let entry of data) {
-        const name = entry.name;
+    const container = document.getElementById("frameEditContainer");
+    container.innerHTML = `<h3>Editing Game from ${game.timestamp}</h3>`;
 
-        if (!teamStats[name]) {
-            teamStats[name] = {
-                games: 0,
-                totalScore: 0,
-                totalStrikes: 0,
-                totalSpares: 0,
-                totalOpens: 0
-            };
-        }
-
-        teamStats[name].games += 1;
-        teamStats[name].totalScore += entry.score;
-
-        teamStats[name].totalStrikes += entry.strikePercent * 12;
-        teamStats[name].totalSpares += entry.sparePercent * 11;
-        teamStats[name].totalOpens += entry.openPercent * 10;
+    let html = "";
+    for (let i = 1; i <= 10; i++) {
+        const frameValue = game.frames && game.frames[i - 1] ? game.frames[i - 1] : "";
+        html += `
+            <label>Frame ${i}: <input type="text" id="editFrame${i}" value="${frameValue}" placeholder="e.g. X or 9 / or 8 1"></label><br>
+        `;
     }
 
-    let csv = "Name,Games,Total Score,Avg Score,Total Strikes,Total Spares,Total Opens,Strike %,Spare %,Open %\n";
+    html += `<button onclick="saveEditedGame(${index}, '${game.name}')">Save Changes</button>`;
+    container.innerHTML += html;
+}
 
-    for (let name in teamStats) {
-        const stats = teamStats[name];
-        const avgScore = stats.totalScore / stats.games;
-        const strikePercent = (stats.totalStrikes / (stats.games * 12)) * 100;
-        const sparePercent = (stats.totalSpares / (stats.games * 11)) * 100;
-        const openPercent = (stats.totalOpens / (stats.games * 10)) * 100;
-
-        csv += `${name},${stats.games},${stats.totalScore},${avgScore.toFixed(2)},` +
-               `${stats.totalStrikes.toFixed(1)},${stats.totalSpares.toFixed(1)},${stats.totalOpens.toFixed(1)},` +
-               `${strikePercent.toFixed(2)}%,${sparePercent.toFixed(2)}%,${openPercent.toFixed(2)}%\n`;
+function saveEditedGame(index, bowlerName) {
+    const frames = [];
+    for (let i = 1; i <= 10; i++) {
+        const val = document.getElementById(`editFrame${i}`).value.trim();
+        frames.push(val);
     }
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "team_stats.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const score = calculateScore(frames);
+    const stats = strikeSpareOpenPercentage(frames);
+
+    const updatedGame = {
+        name: bowlerName,
+        score,
+        strikePercent: stats.strikePercent,
+        sparePercent: stats.sparePercent,
+        openPercent: stats.openPercent,
+        timestamp: new Date().toLocaleString(),
+        frames: frames
+    };
+
+    const data = JSON.parse(localStorage.getItem("bowlingStats")) || [];
+    data[index] = updatedGame;
+    localStorage.setItem("bowlingStats", JSON.stringify(data));
+
+    alert("Game updated successfully!");
+    loadGamesForEdit();
+    document.getElementById("frameEditContainer").innerHTML = "";
 }
